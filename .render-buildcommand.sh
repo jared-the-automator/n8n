@@ -1,30 +1,49 @@
 #!/bin/bash
-# Enable debug mode
-set -x
-
-# Set up SSH with verbose output
+# Set up SSH with multiple keys
 mkdir -p ~/.ssh
-echo "Setting up SSH key..."
-echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519
-cat ~/.ssh/id_ed25519 | sed 's/./*/g' # Print masked version of key for debugging
-chmod 600 ~/.ssh/id_ed25519
-ls -la ~/.ssh/id_ed25519
 
-# Start SSH agent with debug
+# Add first key (for n8n-nodes-job-info)
+echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519
+chmod 600 ~/.ssh/id_ed25519
+
+# Add second key (for n8n)
+echo "$SSH_PRIVATE_KEY1" | base64 -d > ~/.ssh/id_ed25519_1
+chmod 600 ~/.ssh/id_ed25519_1
+
+# Create SSH config to specify which key to use for which repository
+cat > ~/.ssh/config << EOF
+Host github.com-1
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+
+Host github.com-2
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_1
+    IdentitiesOnly yes
+EOF
+
+chmod 600 ~/.ssh/config
+
+# Start SSH agent and add both keys
 eval "$(ssh-agent -s)"
-ssh-add -v ~/.ssh/id_ed25519
+ssh-add ~/.ssh/id_ed25519
+ssh-add ~/.ssh/id_ed25519_1
+
+# Add GitHub to known hosts
 ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 
-# Test GitHub SSH connection
-ssh -Tv git@github.com
+# Configure git to use the correct SSH URLs
+git config --global url."git@github.com-1:jared-the-automator/n8n-nodes-job-info".insteadOf "git+ssh://git@github.com/jared-the-automator/n8n-nodes-job-info"
+git config --global url."git@github.com-2:jared-the-automator/n8n".insteadOf "git+ssh://git@github.com/jared-the-automator/n8n"
 
-# Rest of the script...
+# Rest of your build script...
 export SHELL=/bin/bash
 export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 export CYPRESS_INSTALL_BINARY=0
 export NODE_OPTIONS="--max_old_space_size=4096"
-export PNPM_HOME="/opt/render/project/node_modules/.bin"
-export PATH="$PNPM_HOME:$PATH"
 
 # Install global dependencies
 npm install -g pnpm@9.15.1 turbo rimraf vite
