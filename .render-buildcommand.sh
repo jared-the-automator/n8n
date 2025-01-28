@@ -1,3 +1,4 @@
 #!/bin/bash
-npm install --no-workspace
-npm run build
+npm install -g turbo
+npm install --legacy-peer-deps
+npx turbo run build
