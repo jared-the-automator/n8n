@@ -1,4 +1,10 @@
 #!/bin/bash
+# Set up SSH
+mkdir -p ~/.ssh
+echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+chmod 600 ~/.ssh/id_ed25519
+ssh-keyscan github.com >> ~/.ssh/known_hosts
+
 # Set environment variables
 export SHELL=/bin/bash
 export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
