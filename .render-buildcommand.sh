@@ -1,4 +1,4 @@
 #!/bin/bash
-npm install -g turbo
-npm install --legacy-peer-deps
-npx turbo run build
+npm install -g pnpm
+pnpm install --no-frozen-lockfile
+pnpm build
